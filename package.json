@@ -1,0 +1,32 @@
+{
+  "name": "skadibot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bot.js",
+  "dependencies": {
+    "@discordjs/opus": "^0.1.0",
+    "cheerio": "^1.0.0-rc.3",
+    "discord.js": "^12.1.1",
+    "ffmpeg": "0.0.4",
+    "fluent-ffmpeg": "^2.1.2",
+    "genius-api": "^0.4.1",
+    "genius-lyrics-api": "^2.0.3",
+    "lodash": "^4.17.15",
+    "simple-youtube-api": "^5.2.1",
+    "ytdl-core": "^2.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MindLabor/SkadiBot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MindLabor/SkadiBot/issues"
+  },
+  "homepage": "https://github.com/MindLabor/SkadiBot#readme"
+}
