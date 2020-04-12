@@ -17,7 +17,7 @@ function createHelpEmbed() {
 		.setColor("#6441a5")
 		.setTitle("Help")
 		.setDescription("  ")
-		.setAuthor("Skadi", "https://i.ibb.co/hcJKwVC/Download.png", "")
+		.setAuthor("Skadi Music Bot", "https://i.ibb.co/hcJKwVC/Download.png", "")
 		.addField("**1. play**", "Play a song or put it in the current queue.", false)
 		.addField("**2. stop**", "Stop the music and leave channel. This will delete the current queue.", false)
 		.addField("**3. skip**", "Skip the current song and play the next.", false)

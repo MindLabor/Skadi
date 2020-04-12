@@ -2,6 +2,25 @@ const Discord = require("discord.js");
 const {
 	prefix
 } = require("./config.json");
+const commands = [];
+
+const on = function (command, callback) {
+	commands.push({
+		command: command,
+		callback: callback
+	});
+	return this;
+}
+
+const execute = function (command, message, fallback) {
+	for (c of commands) {
+		if (c.command === command) {
+			c.callback(message);
+			return;
+		}
+	}
+	fallback();
+}
 
 const wordWrap = function (str, maxWidth) {
 	var newLineStr = "#~#~#";
@@ -106,7 +125,7 @@ const parseMessage = function (message) {
 	};
 }
 
-function quotationEncoder(message) {
+const quotationEncoder = function (message) {
 	let inQuot = false;
 	let out = "";
 	for (c of message) {
@@ -120,15 +139,55 @@ function quotationEncoder(message) {
 	return out;
 }
 
-function quotationDecoder(message) {
+const quotationDecoder = function (message) {
 	return message.replace(/\%space\%/g, " ");
 }
 
-function logError(textChannel, error) {
+const logError = function (textChannel, error) {
 	textChannel.send(new Discord.MessageEmbed()
 		.setColor("#6441a5")
 		.setDescription(error));
 	console.log(error);
+}
+
+const filterSongObject = function (song) {
+	let song_thumnails = song.player_response.videoDetails.thumbnail.thumbnails;
+	const filteredSong = {
+		title: song.title,
+		url: song.video_url,
+		author: song.author,
+		channelId: song.channelId,
+		description: song.description,
+		thumbnail: song.video_thumbnail,
+		length: song.length_seconds,
+		player: song_thumnails.length > 0 ? song_thumnails[song_thumnails.length - 1] : undefined,
+		embed: null
+	};
+	return filteredSong;
+}
+
+// Checks if user is in voice channel
+const isUserInVoiceChannel = function (message, textChannel) {
+	voiceChannel = message.member.voice.channel;
+	if (!voiceChannel) {
+		textChannel.send(new Discord.MessageEmbed()
+			.setColor("#6441a5")
+			.setDescription("You have to be in a voice channel!"));
+		return false;
+	}
+	return voiceChannel;
+}
+
+// Checks if user is in voice channel
+const hasBotPermissions = function (bot, voiceChannel, textChannel, perms) {
+	const permissions = voiceChannel.permissionsFor(bot);
+	for (perm of perms) {
+		if (!permissions.has(perm)){
+			Tools.logError(textChannel, "**I need the following permissions to do this:** " + perms.join(" "));
+			return false;
+		}
+	}
+	return true;
 }
 
 module.exports = {
@@ -137,5 +196,10 @@ module.exports = {
 	capitalize,
 	clean,
 	parseMessage,
-	logError
+	logError,
+	on,
+	execute,
+	filterSongObject,
+	isUserInVoiceChannel,
+	hasBotPermissions
 }

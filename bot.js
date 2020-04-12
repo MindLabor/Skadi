@@ -1,6 +1,5 @@
 const Discord = require("discord.js");
 const ytdl = require("ytdl-core");
-const CommandMapper = require("./commandMapper.js");
 const https = require("https");
 const Helper = require("./Helper.js");
 const Tools = require("./Tools.js");
@@ -15,12 +14,13 @@ const {
 
 const client = new Discord.Client();
 const youtube = new Youtube(youtube_token);
-let list = [];
-let playlists = new Map();
-let playlistVideos = new Map();
+
+let queue = [];
 let voiceChannel, textChannel, connection;
+let currentSong;
+let playing = false;
+
 let noDescription = false;
-let currentSongInfo;
 let looping = false;
 
 // Initilize Command
@@ -28,7 +28,7 @@ client.once("ready", () => {
 	console.log("Ready!");
 
 	// Config Commands
-	CommandMapper.on("play", (message) => {
+	Tools.on("play", (message) => {
 		execute(message);
 	}).on("stop", (message) => {
 		stop(message);
@@ -49,6 +49,7 @@ client.once("ready", () => {
 	}).on("help", () => {
 		help();
 	});
+
 });
 
 client.on("message", async message => {
@@ -65,8 +66,8 @@ client.on("message", async message => {
 	textChannel = message.channel;
 
 	// Executing Command
-	CommandMapper.execute(sentPrefix, message, () => {
-		message.channel.send("**Jeg forstår deg ikke!** - This command doesn't exist!");
+	Tools.execute(sentPrefix, message, () => {
+		message.channel.send("This command doesn't exist!");
 	});
 });
 
@@ -82,92 +83,113 @@ async function clearChat(message) {
 }
 
 async function execute(message) {
-	const args = message.content.split(" ");
+	// Check if user is in voice channel
+	voiceChannel = Tools.isUserInVoiceChannel(message, textChannel);
+	if (!voiceChannel) return;
+
+	// Check if the bot has permissions to connect to the voice channel and to speak in it
+	if (!Tools.hasBotPermissions(message.client.user, voiceChannel, textChannel, ["CONNECT", "SPEAK"])) return;
 
 	// Parse message
 	let commands = Tools.parseMessage(message.content) || "";
 	if (commands === "" || commands.args.all.length < 1) return;
 
-	// Check if user is in voice channel
-	voiceChannel = message.member.voice.channel;
-	if (voiceChannel) {
-		textChannel.send(new Discord.MessageEmbed()
-			.setColor("#6441a5")
-			.setDescription("**Bli med på en talekanal!** - You have to be in a voice channel!"));
+	// Add the url/s to the queue
+	// Check if a given url could be a YT playlist
+	if (commands.str.includes("list=")) {
+		//await addYTPlaylist(commands.str);
+		// TODO: Incomplete Implementation
+		return;
+	} else {
+		const id = commands.str;
+		const videoExists = await ytVideoIdExists(id);
+		if (videoExists) {
+			queue.push(`https://www.youtube.com/watch?v=${id}`);
+		} else {
+			Tools.logError(textChannel, "I did not find the given video on Youtube!");
+			return;
+		}
+	}
+
+	// If there were already a song in the queue (This is not the first song)
+	if (queue.length > 1) {
+		let song = await fetchQueueSong(queue[queue.length-1]);
+		let embed = createEmbed("Added \"" + song.title + "\" to the playlist!", song.url, [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player.url, [Tools.secsToString(song.length), song.author.avatar]);
+		textChannel.send(embed);
 		return;
 	}
 
+	// Connect to the voice channel and play the queue
+	try {
+		connection = await voiceChannel.join();
+		play(true);
+	} catch (err) {
+		Tools.logError(textChannel, err);
+	}
+}
 
-	// Check if bot has permissions
-	/*const permissions = voiceChannel.permissionsFor(message.client.user);
-	if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-		return message.channel.send(
-			"**Jeg har ikke tillatelser!** - I don't have any permissions!"
-		);
-	}*/
+async function play(firstSong) {
+	playing = true;
 
-	console.log(commands.str);
-	if (url.includes("list=")) {
-		await addYTPlaylist(commands.str);
+	// If there are no more songs in the queue leave the voice channel
+	if (queue.length <= 0) {
+		leaveVoiceChannel();
+		return;
+	}
+
+	// Play song
+	createAudioDispatcher();
+
+	// Create and send Discord embed of the current song
+	const song = await fetchQueueHeadSong();
+	currentSong = song;
+	if (firstSong) {
+		let embed = createEmbed(song.title, song.url, [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player.url, [Tools.secsToString(song.length), song.author.avatar]);
+		textChannel.send(embed);
 	} else {
-		// Update status
-		client.user.setActivity("Musikk", {
-			type: "STREAMING",
-			url: "https://www.youtube.com/watch?v=" + args[1]
-		});
+		let embed = createEmbed("Playing: " + song.title, song.url, [song.author.name, song.author.avatar, song.author.channel_url], "", "", [Tools.secsToString(song.length), song.author.avatar]);
+		textChannel.send(embed);
+	}
 
-		// Get Youtube song infos
-		const songInfo = await ytdl.getInfo(args[1]);
-		currentSongInfo = songInfo;
+	client.user.setActivity("Music", {
+		type: "STREAMING",
+		url: queue[0]
+	});
+}
 
-		// Save song infos
-		let song_thumnails = songInfo.player_response.videoDetails.thumbnail.thumbnails;
-		const song = {
-			title: songInfo.title,
-			url: songInfo.video_url,
-			author: songInfo.author,
-			channelId: songInfo.channelId,
-			description: songInfo.description,
-			thumbnail: songInfo.video_thumbnail,
-			length: songInfo.length_seconds,
-			player: song_thumnails.length > 0 ? song_thumnails[song_thumnails.length - 1] : undefined,
-			embed: null
-		};
+function createAudioDispatcher() {
+	const dispatcher = connection.play(ytdl(queue[0]))
+		.on("finish", () => {
 
-		// If the queue is empty
-		if (list.length === 0) {
+			// Remove the current song from the queue
+			if (!looping)
+				queue.shift();
 
-			// PLAY SONG THE FIRST TIME
+			// Play the next song in the queue
+			play();
 
-			try {
-				var c = await voiceChannel.join();
-				connection = c;
-
-				list.push(song);
-				play(false);
-			} catch (err) {
-				console.log(err);
-				return message.channel.send(err);
-			}
-		} else {
-
-			// PUT SONG IN QUEUE
-
-			let secs = parseInt(song.length);
-			let mins = Math.floor(secs / 60);
-			secs -= mins * 60;
-			let hs = Math.floor(mins / 60);
-			mins -= hs * 60;
-
-			let embed = createEmbed(song.title + " er i køen!", song.url, [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player.url, [(hs > 0 ? (hs + "h ") : "") + (mins > 0 ? (mins + "m ") : "") + (secs > 0 ? (secs + "s") : ""), song.author.avatar]);
+		}).on("error", error => console.error(error));
+	dispatcher.setVolumeLogarithmic(1);
+}
 
 
-			if (song.embed == null)
-				textChannel.send(embed);
+// Get Youtube song infos from the current song (queue head)
+async function fetchQueueSong(url) {
+		const songInfos = await ytdl.getInfo(url);
+		if (!songInfos) return false;
+		return Tools.filterSongObject(songInfos);
+}
 
-			song.embed = embed;
-			list.push(song);
-		}
+// Get Youtube song infos from the current song (queue head)
+async function fetchQueueHeadSong() {
+		return await fetchQueueSong(queue[0]);
+}
+
+async function ytVideoIdExists(id) {
+	try {
+		return await ytdl.getInfo(id);
+	} catch (err) {
+		return false;
 	}
 }
 
@@ -179,7 +201,7 @@ async function addNext() {
 		return;
 	}
 	const videos = playlistVideos.get(list[0].playlist);
-	const video = await videos[videos.length - list[0].remaining].fetch();
+	const video = await videos[videos.length - queue[0].remaining].fetch();
 	const id = video.raw.id;
 
 	let songInfo;
@@ -189,7 +211,6 @@ async function addNext() {
 		list[0].remaining--;
 		addNext();
 	}
-	currentSongInfo = songInfo;
 
 	// Save song infos
 	let song_thumnails = songInfo.player_response.videoDetails.thumbnail.thumbnails;
@@ -240,7 +261,7 @@ function loop(message) {
 		return;
 	}
 
-	// CHECK IF SONG IS PLAYING
+	// TODO: CHECK IF SONG IS PLAYING
 
 	looping = !looping;
 	if (looping) {
@@ -254,47 +275,46 @@ function loop(message) {
 	}
 }
 
+// Skips the current playing song
 function skip(message) {
-	if (!message.member.voice.channel) {
-		Tools.logError(textChannel, "**Bli med på en talekanal!** - You have to be in a voice channel!");
+	// Check if user is in voice channel
+	voiceChannel = Tools.isUserInVoiceChannel(message, textChannel);
+	if (!voiceChannel) return;
+
+	// If the queue is empty
+	if (queue.length === 0) {
+		Tools.logError(textChannel, "**The playlist is already empty!**");
 		return;
 	}
 
-	if (list.length === 0) {
-		Tools.logError(textChannel, "**Du kan ikke hoppe over!** - There is no song to skip!");
-		return;
-	} else if (list.length === 1) {
-		Tools.logError(textChannel, "**Det er ikke flere sanger i køen!** - There are no more songs in the queue!");
-	}
-
-	noDescription = true;
 	if (connection) {
 		connection.dispatcher.end();
 	} else
-		Tools.logError(textChannel, "**Ingen musikk spiller!** - There is no music playing!");
+		Tools.logError(textChannel, "**There is no music playing!**");
 }
 
+// Stops the current playing song, empties the queue and leaves the voice channel
 function stop(message) {
-	if (!message.member.voice.channel) {
-		Tools.logError(textChannel, "**Bli med på en talekanal!** - You have to be in a voice channel!");
-		return;
-	}
 
-	list = [];
+	// Check if user is in voice channel
+	voiceChannel = Tools.isUserInVoiceChannel(message, textChannel);
+	if (!voiceChannel) return;
+
+	queue = [];
 	if (connection)
 		connection.dispatcher.end();
 	else
-		Tools.logError(textChannel, "**Ingen musikk spiller!** - There is no music playing!");
+		Tools.logError(textChannel, "**There is no music playing!**");
 }
 
 function listQueue(message) {
-	if (!message.member.voice.channel) {
-		Tools.logError(textChannel, "**Bli med på en talekanal!** - You have to be in a voice channel!");
+	// Check if user is in the voice channel
+	if (!Tools.isUserInVoiceChannel)
 		return;
-	}
 
-	if (list.length <= 0) {
-		Tools.logError(textChannel, "**Gjeldende kø er tom!** - The current queue is empty!");
+	// Check if the queue is empty
+	if (queue.length <= 0) {
+		Tools.logError(textChannel, "**The current queue is empty!**");
 		return;
 	}
 
@@ -303,38 +323,6 @@ function listQueue(message) {
 
 function help() {
 	textChannel.send(Helper.help("help"));
-}
-
-async function play(originFromSkip) {
-	if (list.length <= 0) {
-		voiceChannel.leave();
-		return;
-	}
-	if (originFromSkip)
-		textChannel.send(createQueueHeadEmbed());
-	let song = list[0];
-	if ((list[0].playlist || "") !== "")
-		song = list[0].song;
-	const dispatcher = connection
-		.play(ytdl(song.url))
-		.on("finish", () => {
-			if (!looping) {
-				if ((list[0].playlist || "") !== "") {
-					list[0].remaining--;
-					await addNext();
-				} else
-					list.shift();
-			}
-			play(true);
-		})
-		.on("error", error => console.error(error));
-	dispatcher.setVolumeLogarithmic(1);
-
-	let embed = createEmbed(song.title, song.url, [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player.url, [Tools.secsToString(song.length), song.author.avatar]);
-
-	if (!noDescription)
-		textChannel.send(embed);
-	noDescription = false;
 }
 
 function showSongs(message) {
@@ -459,15 +447,15 @@ function showLyricsEmbed(lyrics, artist, artistThumb, title) {
 function createQueueEmbed() {
 	let embed = new Discord.MessageEmbed()
 		.setColor("#6441a5")
-		.setTitle("Køen");
+		.setTitle("Current Playlist");
 
-	let secs = 1,
-		index = 1;
-	for (song of list) {
-		let fra = Tools.secsToString(secs);
-		let til = Tools.secsToString(secs + parseInt(song.length));
-		embed.addField("**" + index + ".  " + song.title + "**", "Fra **" + fra + "** til **" + til + "**", false);
-		secs += parseInt(song.length);
+	let secs = 1;
+	let index = 1;
+	for (song of queue) {
+		const from = Tools.secsToString(secs);
+		const to = Tools.secsToString(secs + parseInt(currentSong.length));
+		embed.addField("**" + index + ".  " + currentSong.title + "**", "From **" + from + "** to **" + to + "**", false);
+		secs += parseInt(currentSong.length);
 		index++;
 	}
 
@@ -479,7 +467,7 @@ function createQueueHeadEmbed() {
 		.setColor("#6441a5")
 		.setTitle("Playing");
 
-	embed.addField("**" + list[0].title + "**", "**Length:** " + Tools.secsToString(list[0].length), false);
+	embed.addField("**" + queue[0].title + "**", "**Length:** " + Tools.secsToString(list[0].length), false);
 
 	return embed;
 }
@@ -495,15 +483,25 @@ function createGeniusSongEmbed(title, author, desc, thumb) {
 }
 
 function createEmbed(title, url, author, desc, thumb, footer) {
-	return new Discord.MessageEmbed()
+	let embed = new Discord.MessageEmbed()
 		.setColor("#6441a5")
-		.setImage(thumb)
 		.setTitle(title)
 		.setURL(url)
+		.setImage(thumb)
 		.setAuthor(...author)
 		.setDescription(desc)
 		.setTimestamp()
 		.setFooter(...footer);
+	if (thumb !== "")
+		embed.setImage(thumb)
+	return embed;
+}
+
+function leaveVoiceChannel() {
+	// TODO: Check if voiceChannel is set
+	voiceChannel.leave();
+	connection = null;
+	playing = false;
 }
 
 
