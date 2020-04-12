@@ -1,0 +1,2 @@
+# Skadi
+Discord Music Bot
