@@ -1,9 +1,12 @@
+
+// REQUIRES
 const Discord = require("discord.js");
 const {
   prefix
-} = require("./config.json");
+} = require("./../config.json");
 const commands = [];
 
+// Register command for execution
 const on = function(command, callback) {
   commands.push({
     command: command,
@@ -12,6 +15,7 @@ const on = function(command, callback) {
   return this;
 }
 
+// Execute the function that corresponds to the command
 const execute = function(command, message, fallback) {
   for (c of commands) {
     if (c.command === command) {
@@ -22,7 +26,10 @@ const execute = function(command, message, fallback) {
   fallback();
 }
 
+// Wrap to long strings into an array and try to wrap by a whole word
 const wordWrap = function(str, maxWidth) {
+	// Temporary placeholder for a new line
+	str = str.replace(/\#\~\#\~\#/g, "");
   var newLineStr = "#~#~#";
   done = false;
   res = '';
@@ -42,28 +49,27 @@ const wordWrap = function(str, maxWidth) {
       res += [str.slice(0, maxWidth), newLineStr].join('');
       str = str.slice(maxWidth);
     }
-
   }
-
   return res + str;
 }
 
+// Test if x is a whitespace character
 function testWhite(x) {
   var white = new RegExp(/^\s$/);
   return white.test(x.charAt(0));
 };
 
+// Turns seconds to a h:m:s string (3664 => "1h 1m 4s")
 const secsToString = function(s) {
   let secs = parseInt(s);
   let mins = Math.floor(secs / 60);
   secs -= mins * 60;
   let hs = Math.floor(mins / 60);
   mins -= hs * 60;
-
   return (hs > 0 ? (hs + "h ") : "") + (mins > 0 ? (mins + "m ") : "") + (secs > 0 ? (secs + "s") : "");
 }
 
-
+// Capitalize the first non-whitespace character of a string
 const capitalize = function(s) {
   let found = false;
   let result = "";
@@ -77,16 +83,18 @@ const capitalize = function(s) {
   return result;
 };
 
+// Clean a string from non-alphabetical characters and allow space (no !.,:\n etc.)
 const clean = function(s) {
   let result = "";
   for (c of s) {
-    if (c.match(/^[A-Za-z ]$/)) {
+    if (c.match(/^[A-Za-zÀ-ž\u0370-\u03FF\u0400-\u04FF ]$/)) {
       result += c;
     }
   }
   return result;
 };
 
+// Parse a message/commands into an argument object
 const parseMessage = function(message) {
   if (!message.startsWith(prefix)) return;
   message = message.substr(prefix.length);
@@ -125,6 +133,8 @@ const parseMessage = function(message) {
   };
 }
 
+// Used to consider message arguments that are in quotations
+// Encodes Space characters to prevent splitting the argument
 const quotationEncoder = function(message) {
   let inQuot = false;
   let out = "";
@@ -139,10 +149,13 @@ const quotationEncoder = function(message) {
   return out;
 }
 
+// Used to consider message arguments that are in quotations
+// Decodes Space characters @see quotationEncoder()
 const quotationDecoder = function(message) {
   return message.replace(/\%space\%/g, " ");
 }
 
+// Shows an error embed
 const logError = function(textChannel, error) {
   textChannel.send(new Discord.MessageEmbed()
     .setColor("#6441a5")
@@ -150,6 +163,7 @@ const logError = function(textChannel, error) {
   console.log(error);
 }
 
+// Filters only the needed information from a given song object
 const filterSongObject = function(song) {
   let song_thumnails = song.player_response.videoDetails.thumbnail.thumbnails;
   const filteredSong = {
@@ -190,10 +204,11 @@ const hasBotPermissions = function(bot, voiceChannel, textChannel, perms) {
   return true;
 }
 
+// Calculates the Levenshtein distance (The amount of single character edits to convert a string to another)
+// Used to calculate the similarity of two strings (The lower the result, the more similar are they)
 const levenshteinDistance = function(a, b) {
   if (a.length == 0) return b.length;
   if (b.length == 0) return a.length;
-
   var matrix = [];
 
   // increment along the first column of each row
@@ -224,6 +239,7 @@ const levenshteinDistance = function(a, b) {
   return matrix[b.length][a.length];
 };
 
+// Export ONLY public functions
 module.exports = {
   wordWrap,
   secsToString,
