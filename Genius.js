@@ -1,3 +1,5 @@
+const Tools = require("./Tools.js");
+
 function GENIUS() {}
 
 const Genius = require("genius-api");
@@ -11,7 +13,7 @@ const genius = new Genius(genius_token);
 
 
 const getArtist = function (id) {
-	genius.artist(16775).then(function (response) {
+	genius.artist(id).then(function (response) {
 		console.log('artist', response.artist);
 	});
 }
@@ -19,20 +21,13 @@ const getArtist = function (id) {
 // Get artists ID by their name
 const normalizeName = name => name.trim().replace(/\./g, ' ').toLowerCase();
 const searchArtist = function (artistName, success, error) {
-
 	// Normalize the name
 	const artistNameNormalized = normalizeName(artistName);
 
-	search(artistNameNormalized, (r) => {
-		for (song of r.hits) {
-			if (song.type === 'song') {
-				success(song.result.primary_artist);
-				break;
-			}
-		}
-		error("**I did not find any songs related to " + query + "!");
-	}, (e) => {
-		error(e);
+	searchAfterField(artistNameNormalized, "artist", (r) => {
+		success(r.primary_artist);
+	}, () => {
+		error("**I did not find the artist " + query + "!**");
 	});
 }
 
@@ -48,10 +43,11 @@ const getSongLyrics = function (song, callback, error) {
 		optimizeQuery: true
 	};
 
+
 	getLyrics(options)
 		.then(lyrics => {
 			if ((lyrics || "") === "") {
-				error("**I did not find any lyrics to the song " + song.full_title + "**")
+				error("**I did not find any lyrics to the song \"" + song.title + "\"!**")
 				return;
 			}
 			callback(lyrics)
@@ -84,14 +80,40 @@ const getSongsByArtist = function (id, count, sort, success, error) {
 }
 
 const search = function (query, success, error) {
+	searchAfterField(query, "song", success, error);
+}
+
+const searchAfterField = function (query, field, success, error) {
+	// TODO: Include popularity and full_title etc. into account
 	genius.search(query).then(function (response) {
+		let minLevenshteinDistance = 999999;
+		let bestMatchedHit = "";
 		for (hit of response.hits) {
 			if (hit.type === "song") {
-				success(hit.result);
-				return;
+				let levenshteinDistance = Tools.levenshteinDistance(getFieldFromHit(hit.result, field, query), query);
+				if (levenshteinDistance < minLevenshteinDistance) {
+					minLevenshteinDistance = levenshteinDistance;
+					bestMatchedHit = hit.result;
+				}
 			}
 		}
-		error("**I did not find any songs related to " + query + "!");
+		if (bestMatchedHit !== "") success(bestMatchedHit);
+		else error();
+	});
+}
+
+function getFieldFromHit(hit, field, query) {
+	switch (field) {
+		case "artist": return hit.primary_artist.name;
+		case "song": return hit.title;
+	}
+	return query;
+}
+
+const searchAll = function (query, success, error) {
+	genius.search(query).then(function (response) {
+		if (response.hits.length>0) success(response);
+		else error("**I did not find any songs related to " + query + "!");
 	});
 }
 

@@ -330,54 +330,52 @@ function showSongs(message) {
 	let commands = Tools.parseMessage(message.content) || "";
 	if (commands === "" || commands.args.all.length <= 0) return;
 
-	let moreThan1Argument = commands.args.all.length > 1;
-	let artistName = moreThan1Argument ? commands.args.allWithoutLast : commands.args.last;
-	let songsPerPage = moreThan1Argument ? commands.args.last : 5;
-	if (songsPerPage !== 5) {
-		try {
-			songsPerPage = parseInt(commands.args.last);
-		} catch (e) {
-			console.log("ERROR: Songsperpage is not a number");
-			return;
-		}
-		if (songsPerPage > 20 || songsPerPage < 1) {
-			songsPerPage = 20;
-		}
+	// Set options
+	let artistName = commands.args.allWithoutLast;
+	let songsPerPage = 5;
+
+	// Prevent overflow
+	songsPerPage = parseInt(commands.args.last.trim());
+	if (isNaN(songsPerPage)) {
+		songsPerPage = 5;
+		artistName = commands.str;
+	} else {
+		if (songsPerPage > 20) songsPerPage = 20;
+		else if(songsPerPage < 1) songsPerPage = 5;
 	}
-	let artist = "",
-		artistThumb = "";
-	GENIUS.getArtistIdByName(artistName, () => {
-		textChannel.send(new Discord.MessageEmbed()
-			.setColor("#6441a5")
-			.setDescription("**I did not find any songs from the artist " + artistName.trim() + "**"));
-	}).then(artistId => {
-		artist = artistId.primary_artist.name;
-		artistThumb = artistId.primary_artist.image_url;
-		GENIUS.getSongsByArtist(artistId.primary_artist.id, songsPerPage, 'popularity', r => {
+
+	let artist = "";
+	let artistThumb = "";
+	// Search artist
+	GENIUS.searchArtist(artistName, (response) => {
+		artist = response.name;
+		artistThumb = response.image_url;
+
+		// Get songs from artist
+		GENIUS.getSongsByArtist(response.id, songsPerPage, 'popularity', r => {
 			let songList = GENIUS.filterSongList(r.songs);
 
-			//console.log(genius.getSongLyrics("https://api.genius.com/songs/" + data[0].api));
+			// If song list is empty
 			if (songList.length <= 0) {
-				textChannel.send(new Discord.MessageEmbed()
-					.setColor("#6441a5")
-					.setDescription("**I did not find any songs from the artist " + sentArgs + "**"));
+				Tools.logError(textChannel, "**I did not find any songs from the artist " + sentArgs + "!**");
 				return;
 			}
 
+			// Show songs
 			let embed = new Discord.MessageEmbed()
 				.setAuthor(artist, artistThumb, "")
 				.setColor("#6441a5")
 				.setTitle(songList.length + " Songs");
-
 			let index = 1;
 			for (s of songList) {
 				embed.addField("**" + index + ".  " + Tools.capitalize(s.title.trim()) + "**", Tools.capitalize(s.full_title.trim()), false);
 				index++;
 			}
-
 			textChannel.send(embed);
 		}, err => console.error(err));
-	}).catch(err => console.error(err));
+	}, (error) => {
+		Tools.logError(textChannel, error);
+	});
 }
 
 function showLyrics(message) {
@@ -392,6 +390,7 @@ function showLyrics(message) {
 
 		artistName = Tools.clean(artistName);
 		songTitle = Tools.clean(songTitle);
+		console.log (artistName, songTitle);
 
 		// Show Lyrics
 		GENIUS.getSongLyrics({
@@ -400,7 +399,6 @@ function showLyrics(message) {
 		}, (lyrics) => {
 			showLyricsEmbed(lyrics, artistName, artistThumb, Tools.capitalize(song.title))
 		}, (error) => Tools.logError(textChannel, error));
-
 	}, (error) => Tools.logError(textChannel, error));
 
 }
