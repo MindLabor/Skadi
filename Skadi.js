@@ -1,3 +1,5 @@
+
+// REQUIRES
 const Discord = require("discord.js");
 const ytdl = require("ytdl-core");
 const https = require("https");
@@ -22,15 +24,13 @@ let currentSong;
 let playing = false;
 
 let noDescription = false;
-let looping = false;
 
-// Initilize Command
 client.once("ready", () => {
-  console.log("Ready!");
+	 console.log("Registering Commands...");
 
-  // Config Commands
+  // Register Commandhandlers
   Tools.on("play", (message) => {
-    execute(message);
+    start(message);
   }).on("stop", (message) => {
     stop(message);
   }).on("skip", (message) => {
@@ -40,7 +40,7 @@ client.once("ready", () => {
   }).on("clear", (message) => {
     clearChat(message);
   }).on("loop", (message) => {
-    loop(message);
+		// TODO: Implement Looping
   }).on("songs", (message) => {
     showSongs(message);
   }).on("lyrics", (message) => {
@@ -51,39 +51,45 @@ client.once("ready", () => {
     help();
   });
 
+	 console.log("Ready!");
 });
 
+// TODO: Show Loading messages
+
+// When the user writes a message
 client.on("message", async message => {
   if (message.author.bot) return;
   if (!message.content.startsWith(prefix)) return;
+	textChannel = message.channel;
 
-  // Parsing Command
-  let command = message.content.substr(prefix.length).split(" ");
-  if (command.length === 0) return;
-  let sentPrefix = command[0];
-  delete command[0];
-  let sentArgs = command.join(" ").trim();
-
-  textChannel = message.channel;
+	// Parse message
+	let commands = message.content.substring(prefix.length).split(" ");
 
   // Executing Command
-  Tools.execute(sentPrefix, message, () => {
-    message.channel.send("This command doesn't exist!");
+  Tools.execute(commands[0], message, () => {
+    message.channel.send("For help use **#help**");
   });
 });
 
+// Clear all messages from the current chat
+// TODO: Delete only messages that don't throw an error (14 days error)
 async function clearChat(message) {
-  let fetched;
-  do {
-    fetched = await message.channel.messages.fetch({
-      limit: 100
-    });
-    message.channel.bulkDelete(fetched);
-  }
-  while (fetched.size >= 2);
+	try {
+	  let fetched;
+	  do {
+	    fetched = await message.channel.messages.fetch({
+	      limit: 100
+	    });
+	    message.channel.bulkDelete(fetched);
+	  }
+	  while (fetched.size >= 2);
+	} catch (err) {
+		Tools.logError(textChannel, "**I couldn't delete the messages since some of them were older than 14 days!**");
+	}
 }
 
-async function execute(message) {
+// Joins the channel and plays from the head of the queue
+async function start(message) {
   // Check if user is in voice channel
   voiceChannel = Tools.isUserInVoiceChannel(message, textChannel);
   if (!voiceChannel) return;
@@ -129,6 +135,7 @@ async function execute(message) {
   }
 }
 
+// Plays a song from the head of the queue
 async function play(firstSong) {
   playing = true;
 
@@ -158,13 +165,13 @@ async function play(firstSong) {
   });
 }
 
+// Streams the audio data from Youtube through the YTDL library
 function createAudioDispatcher() {
   const dispatcher = connection.play(ytdl(queue[0]))
     .on("finish", () => {
 
       // Remove the current song from the queue
-      if (!looping)
-        queue.shift();
+      queue.shift();
 
       // Play the next song in the queue
       play();
@@ -186,6 +193,7 @@ async function fetchQueueHeadSong() {
   return await fetchQueueSong(queue[0]);
 }
 
+// Checks if the given YT Video ID exists
 async function ytVideoIdExists(id) {
   try {
     return await ytdl.getInfo(id);
@@ -194,43 +202,8 @@ async function ytVideoIdExists(id) {
   }
 }
 
-async function addNext() {
-  if (list.length <= 0) return;
-  if ((list[0].playlist || "") === "") return;
-  if (list[0].remaining <= 0) {
-    list.shift();
-    return;
-  }
-  const videos = playlistVideos.get(list[0].playlist);
-  const video = await videos[videos.length - queue[0].remaining].fetch();
-  const id = video.raw.id;
-
-  let songInfo;
-  try {
-    songInfo = await ytdl.getInfo(id);
-  } catch (e) {
-    list[0].remaining--;
-    addNext();
-  }
-
-  // Save song infos
-  let song_thumnails = songInfo.player_response.videoDetails.thumbnail.thumbnails;
-  const song = {
-    title: songInfo.title,
-    url: songInfo.url,
-    author: songInfo.author,
-    channelId: songInfo.author.id,
-    description: songInfo.description,
-    thumbnail: songInfo.author.avatar,
-    length: songInfo.length,
-    player: songInfo.player,
-    embed: null
-  };
-
-  list[0].song = song;
-  showPlaylistEmbed(song);
-}
-
+// TODO: Playlists
+/*
 async function addYTPlaylist(url) {
   try {
     const playlist = await youtube.getPlaylist(url);
@@ -252,29 +225,7 @@ async function addYTPlaylist(url) {
 function showPlaylistEmbed() {
   let embed = createEmbed(song.title || "", song.url || "", [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player === undefined ? "" : (song.player.url || ""), [Tools.secsToString(song.length), song.author.avatar]);
   textChannel.send(embed);
-}
-
-function loop(message) {
-  if (!message.member.voice.channel) {
-    textChannel.send(new Discord.MessageEmbed()
-      .setColor("#6441a5")
-      .setDescription("**Bli med på en talekanal!** - You have to be in a voice channel!"));
-    return;
-  }
-
-  // TODO: CHECK IF SONG IS PLAYING
-
-  looping = !looping;
-  if (looping) {
-    textChannel.send(new Discord.MessageEmbed()
-      .setColor("#6441a5")
-      .setDescription("**Looping** is on"));
-  } else {
-    textChannel.send(new Discord.MessageEmbed()
-      .setColor("#6441a5")
-      .setDescription("**Looping** is off"));
-  }
-}
+}*/
 
 // Skips the current playing song
 function skip(message) {
@@ -308,6 +259,7 @@ function stop(message) {
     Tools.logError(textChannel, "**There is no music playing!**");
 }
 
+// Shows the current queue
 function listQueue(message) {
   // Check if user is in the voice channel
   if (!Tools.isUserInVoiceChannel)
@@ -322,10 +274,12 @@ function listQueue(message) {
   textChannel.send(createQueueEmbed());
 }
 
+// Shows the help embed
 function help() {
   textChannel.send(Helper.help("help"));
 }
 
+// Fetches and shows the songs from a given artist
 function showSongs(message) {
   // Parse message
   let commands = Tools.parseMessage(message.content) || "";
@@ -379,6 +333,7 @@ function showSongs(message) {
   });
 }
 
+// Search for and show the lyrics of a given song
 function showLyrics(message) {
   // Parse message
   let commands = Tools.parseMessage(message.content) || "";
@@ -405,24 +360,21 @@ function showLyrics(message) {
 
 }
 
+// Searches for a song
 function search(message) {
   // Parse message
   let commands = Tools.parseMessage(message.content) || "";
   if (commands === "" || commands.args.all.length < 1) return;
 
   GENIUS.search(commands.str, (song) => {
-
     let embed = createGeniusSongEmbed(Tools.capitalize(song.title), [song.primary_artist.name, song.primary_artist.image_url], Tools.capitalize(song.full_title), song.song_art_image_thumbnail_url);
     textChannel.send(embed);
-
-  }, (error) => {
-    textChannel.send(new Discord.MessageEmbed()
-      .setColor("#6441a5")
-      .setDescription(error));
-  });
+  }, (error) => Tools.logError(textChannel, error));
 }
 
+// TODO: Export Embed creation to another module
 
+// Shows the lyrics EMBED
 function showLyricsEmbed(lyrics, artist, artistThumb, title) {
   let messages = Tools.wordWrap(lyrics, 1850).split("#~#~#");
   if (messages.length <= 0) return;

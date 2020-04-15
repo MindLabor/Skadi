@@ -19,18 +19,17 @@ function createHelpEmbed() {
   return new Discord.MessageEmbed()
     .setColor("#6441a5")
     .setTitle("Help")
-    .setDescription("  ")
-    .setAuthor("Skadi Music Bot", "https://i.ibb.co/hcJKwVC/Download.png", "")
-    .addField("**1. play**", "Play a song or put it in the current queue.", false)
-    .addField("**2. stop**", "Stop the music and leave channel. This will delete the current queue.", false)
-    .addField("**3. skip**", "Skip the current song and play the next.", false)
-    .addField("**4. queue**", "Show all songs in the current queue.", false)
-    .addField("**5. clear**", "Clears all messages in a chat. Maximum of 100 messages at a time.", false)
-    .addField("**6. loop**", "Loop the current song. To deactivate the loop use " + prefix + "loop again.", false)
-    .addField("**7. songs**", "Show 5 songs from an artist.", false)
-    .addField("**8. lyrics**", "Show the lyrics of a given song.", false)
-    .addField("**9. search**", "Search a particular song.", false)
-    .addField("**10. help**", "Show all available commands.", false)
+    .setAuthor("Skadi Music Bot", "https://i.ibb.co/hcJKwVC/Download.png", "https://github.com/MindLabor/Skadi")
+		.setDescription(
+			`**1. play:** Play a song or put it in the current queue. \n
+			**2. stop:** Stop the music and leave channel. This will delete the current queue. \n
+			**3. skip:** Skip the current song and play the next. \n
+			**4. queue:** Show all songs in the current queue. \n
+			**5. clear:** Clears all messages in a chat. Maximum of 100 messages at a time. \n
+			**6. songs:** Show 5 songs from an artist. \n
+			**7. lyrics:** Show the lyrics of a given song. \n
+			**8. search:** Search a particular song. \n
+			**9. help:** Show all available commands.`)
     .setTimestamp()
     .setFooter("Made by Sexy Norweger");
 }
