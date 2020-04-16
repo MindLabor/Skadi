@@ -29,7 +29,7 @@ const execute = function(command, message, fallback) {
 // Wrap to long strings into an array and try to wrap by a whole word
 const wordWrap = function(str, maxWidth) {
 	// Temporary placeholder for a new line
-	str = str.replace(/\#\~\#\~\#/g, "");
+	str = str.replace(/#~#~#/g, "");
   var newLineStr = "#~#~#";
   done = false;
   res = '';
@@ -99,7 +99,7 @@ const parseMessage = function(message) {
   if (!message.startsWith(prefix)) return;
   message = message.substr(prefix.length);
 
-  let quotationMarks = (message.match(/\"/g) || []).length;
+  let quotationMarks = (message.match(/"/g) || []).length;
   if (quotationMarks % 2 == 0) message = quotationEncoder(message);
 
   let commandArr = message.replace(/[\s]+/g, " ").split(" ");
@@ -152,7 +152,7 @@ const quotationEncoder = function(message) {
 // Used to consider message arguments that are in quotations
 // Decodes Space characters @see quotationEncoder()
 const quotationDecoder = function(message) {
-  return message.replace(/\%space\%/g, " ");
+  return message.replace(/%space%/g, " ");
 }
 
 // Shows an error embed
