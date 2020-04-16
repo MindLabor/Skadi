@@ -136,6 +136,10 @@ const parseMessage = function(message) {
 // Used to consider message arguments that are in quotations
 // Encodes Space characters to prevent splitting the argument
 const quotationEncoder = function(message) {
+  if (!message) return "";
+  let quotationMarks = (message.match(/\"/g) || []).length;
+  if (quotationMarks % 2 != 0) return message;
+
   let inQuot = false;
   let out = "";
   for (c of message) {
@@ -252,5 +256,6 @@ module.exports = {
   filterSongObject,
   isUserInVoiceChannel,
   hasBotPermissions,
-  levenshteinDistance
+  levenshteinDistance,
+  quotationEncoder
 }
