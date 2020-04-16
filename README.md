@@ -4,7 +4,7 @@
     <p align="center">
         <p>Skadi is a Music Bot for Discord that is written in node.js</p>
     </p>
-<a href="https://www.codefactor.io/repository/github/mindlabor/skadi/overview/master"><img src="https://www.codefactor.io/repository/github/mindlabor/skadi/badge/master" alt="CodeFactor" /></a>
+<a href="https://www.codefactor.io/repository/github/mindlabor/skadi/overview/master"><img src="https://www.codefactor.io/repository/github/mindlabor/skadi/badge/master" alt="CodeFactor" /></a><img src="https://travis-ci.com/MindLabor/Skadi.svg?branch=master" alt="Travis CI" />
 </div>
 
 # Installation
