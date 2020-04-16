@@ -1,4 +1,3 @@
-function GENIUS() {}
 
 // REQUIRES
 const Tools = require("./Tools.js");

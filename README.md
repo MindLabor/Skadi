@@ -1,8 +1,11 @@
 <div align="center">
     <img src="https://github.com/MindLabor/Skadi/raw/master/favi.png" height="128" style="border-radius: 15px;">
     <h2>Skadi Music Bot</h2>
+    <p align="center">
+        <p>Skadi is a Music Bot for Discord that is written in node.js</p>
+    </p>
+<a href="https://www.codefactor.io/repository/github/mindlabor/skadi/overview/master"><img src="https://www.codefactor.io/repository/github/mindlabor/skadi/badge/master" alt="CodeFactor" /></a>
 </div>
-Skadi is a Music Bot for Discord that is written in node.js.
 
 # Installation
 1. Setup API Tokens at [Youtube API](https://console.developers.google.com/apis), [Genius API](https://docs.genius.com/) and [Discord Bot Token](https://discordapp.com/developers/applications)
