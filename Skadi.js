@@ -13,7 +13,7 @@ const {
   token,
   genius_token,
   youtube_token
-} = require("./config.json");
+} = require("./test-config.json");
 
 const client = new Discord.Client();
 const youtube = new Youtube(youtube_token);
