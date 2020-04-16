@@ -1,6 +1,7 @@
 <div align="center">
     <img src="https://github.com/MindLabor/Skadi/raw/master/favi.png" height="128" style="border-radius: 15px;">
     <h2>Skadi Music Bot</h2>
+    [![CodeFactor](https://www.codefactor.io/repository/github/mindlabor/skadi/badge/master)](https://www.codefactor.io/repository/github/mindlabor/skadi/overview/master)
 </div>
 Skadi is a Music Bot for Discord that is written in node.js.
 
