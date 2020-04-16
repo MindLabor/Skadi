@@ -3,7 +3,7 @@
 const Discord = require("discord.js");
 const {
   prefix
-} = require("./../test-config.json"); 
+} = require("./../test-config.json");
 const commands = [];
 
 // Register command for execution
@@ -137,7 +137,7 @@ const parseMessage = function(message) {
 // Encodes Space characters to prevent splitting the argument
 const quotationEncoder = function(message) {
   if (!message) return "";
-  let quotationMarks = (message.match(/\"/g) || []).length;
+  let quotationMarks = (message.match(/"/g) || []).length;
   if (quotationMarks % 2 != 0) return message;
 
   let inQuot = false;
