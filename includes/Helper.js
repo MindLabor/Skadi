@@ -1,9 +1,6 @@
 
 // REQUIRES
 const Discord = require("discord.js");
-const {
-  prefix
-} = require("./../config.json");
 
 // Displays the help embed that corresponds to the given command
 const help = function(help) {
