@@ -4,7 +4,7 @@ const Tools = require("./Tools.js");
 const Genius = require("genius-api");
 const {
   genius_token
-} = require("./test-config.json"); 
+} = require("./../test-config.json"); 
 const {
   getLyrics
 } = require("genius-lyrics-api");

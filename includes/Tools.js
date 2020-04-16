@@ -3,7 +3,7 @@
 const Discord = require("discord.js");
 const {
   prefix
-} = require("./test-config.json"); 
+} = require("./../test-config.json"); 
 const commands = [];
 
 // Register command for execution
