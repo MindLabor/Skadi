@@ -6,7 +6,7 @@
     </p>
     <a href="https://travis-ci.com/github/MindLabor/Skadi"><img src="https://travis-ci.com/MindLabor/Skadi.svg?branch=master" alt="Travis CI" /></a>&nbsp;&nbsp;<a href="https://www.codefactor.io/repository/github/mindlabor/skadi/overview/master"><img src="https://www.codefactor.io/repository/github/mindlabor/skadi/badge/master" alt="CodeFactor" /></a>
 
-
+<a href='https://coveralls.io/github/MindLabor/Skadi?branch=master'><img src='https://coveralls.io/repos/github/MindLabor/Skadi/badge.svg?branch=master' alt='Coverage Status' /></a>
 
 
 </div>
