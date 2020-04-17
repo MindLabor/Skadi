@@ -15,7 +15,7 @@
 1. Setup API Tokens at [Youtube API](https://console.developers.google.com/apis), [Genius API](https://docs.genius.com/) and [Discord Bot Token](https://discordapp.com/developers/applications)
 2. Put API Tokens in the `config.js` file
 3. Run `npm install`
-4. Start Bot with `node Skadi.js`
+4. Start Bot with `node Skadi.js` (or `skadi` when on Windows)
 
 # Usage
 **Command Structure:** \<prefix\>\<command\> \<args\>
