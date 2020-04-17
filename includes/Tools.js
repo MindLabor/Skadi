@@ -2,8 +2,11 @@
 // REQUIRES
 const Discord = require("discord.js");
 const {
-  prefix
-} = require("./../test-config.json");
+  prefix,
+  token,
+  genius_token,
+  youtube_token
+} = require("./../tconfig.json");
 const commands = [];
 
 // Register command for execution
@@ -257,5 +260,9 @@ module.exports = {
   isUserInVoiceChannel,
   hasBotPermissions,
   levenshteinDistance,
-  quotationEncoder
+  quotationEncoder,
+  prefix,
+  token,
+  genius_token,
+  youtube_token
 }

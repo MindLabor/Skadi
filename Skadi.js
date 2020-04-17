@@ -11,12 +11,11 @@ const GENIUS = require("./includes/Genius.js");
 const {
   prefix,
   token,
-  genius_token,
   youtube_token
-} = require("./test-config.json");
+} = require("./config.json"); // 3= require("./test-config.json");
 
 const client = new Discord.Client();
-const youtube = new Youtube(youtube_token);
+const youtube = new Youtube(Tools.youtube_token);
 
 let queue = [];
 let voiceChannel, textChannel, connection;
@@ -59,11 +58,11 @@ client.once("ready", () => {
 // When the user writes a message
 client.on("message", async message => {
   if (message.author.bot) return;
-  if (!message.content.startsWith(prefix)) return;
+  if (!message.content.startsWith(Tools.prefix)) return;
 	textChannel = message.channel;
 
 	// Parse message
-	let commands = message.content.substring(prefix.length).split(" ");
+	let commands = message.content.substring(Tools.prefix.length).split(" ");
 
   // Executing Command
   Tools.execute(commands[0], message, () => {
@@ -457,4 +456,4 @@ function leaveVoiceChannel() {
 }
 
 
-client.login(token);
+client.login(Tools.token);

@@ -3,12 +3,9 @@
 const Tools = require("./Tools.js");
 const Genius = require("genius-api");
 const {
-  genius_token
-} = require("./../test-config.json"); 
-const {
   getLyrics
 } = require("genius-lyrics-api");
-const genius = new Genius(genius_token);
+const genius = new Genius(Tools.genius_token);
 
 
 // Get an artist from its id
@@ -35,7 +32,7 @@ const getSongLyrics = function(song, callback, error) {
   // Normalize the name
   const artistNameNormalized = normalizeName(song.artist);
   const options = {
-    apiKey: genius_token,
+    apiKey: Tools.genius_token,
     title: song.title,
     artist: artistNameNormalized,
     optimizeQuery: true
