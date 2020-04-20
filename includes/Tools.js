@@ -37,7 +37,7 @@ const wordWrap = function(str, maxWidth) {
   done = false;
   res = '';
   while (str.length > maxWidth) {
-    found = false;
+    let found = false;
     // Inserts new line at first whitespace of the line
     for (let i = maxWidth - 1; i >= 0; i--) {
       if (testWhite(str.charAt(i))) {
