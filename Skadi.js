@@ -321,7 +321,7 @@ function showSongs(message) {
         .setColor("#6441a5")
         .setTitle(songList.length + " Songs");
       let index = 1;
-      for (s of songList) {
+      for (let s of songList) {
         embed.addField("**" + index + ".  " + Tools.capitalize(s.title.trim()) + "**", Tools.capitalize(s.full_title.trim()), false);
         index++;
       }
@@ -386,7 +386,7 @@ function showLyricsEmbed(lyrics, artist, artistThumb, title) {
   textChannel.send(embed);
   messages.shift();
 
-  for (m of messages) {
+  for (let m of messages) {
     let embed = new Discord.MessageEmbed()
       .setColor("#6441a5")
       .setDescription(m);
@@ -402,7 +402,7 @@ function createQueueEmbed() {
 
   let secs = 1;
   let index = 1;
-  for (song of queue) {
+  for (let song of queue) {
     const from = Tools.secsToString(secs);
     const to = Tools.secsToString(secs + parseInt(currentSong.length));
     embed.addField("**" + index + ".  " + currentSong.title + "**", "From **" + from + "** to **" + to + "**", false);
