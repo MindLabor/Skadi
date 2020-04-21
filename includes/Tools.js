@@ -20,7 +20,7 @@ const on = function(command, callback) {
 
 // Execute the function that corresponds to the command
 const execute = function(command, message, fallback) {
-  for (c of commands) {
+  for (let c of commands) {
     if (c.command === command) {
       c.callback(message);
       return;
@@ -37,9 +37,9 @@ const wordWrap = function(str, maxWidth) {
   done = false;
   res = '';
   while (str.length > maxWidth) {
-    found = false;
+    let found = false;
     // Inserts new line at first whitespace of the line
-    for (i = maxWidth - 1; i >= 0; i--) {
+    for (let i = maxWidth - 1; i >= 0; i--) {
       if (testWhite(str.charAt(i))) {
         res = res + [str.slice(0, i), newLineStr].join('');
         str = str.slice(i + 1);
@@ -76,7 +76,7 @@ const secsToString = function(s) {
 const capitalize = function(s) {
   let found = false;
   let result = "";
-  for (c of s) {
+  for (let c of s) {
     if (!found && c.match(/^[A-Za-z]$/)) {
       result += c.toUpperCase();
       found = true;
@@ -89,7 +89,7 @@ const capitalize = function(s) {
 // Clean a string from non-alphabetical characters and allow space (no !.,:\n etc.)
 const clean = function(s) {
   let result = "";
-  for (c of s) {
+  for (let c of s) {
     if (c.match(/^[A-Za-zÀ-ž\u0370-\u03FF\u0400-\u04FF ]$/)) {
       result += c;
     }
@@ -145,7 +145,7 @@ const quotationEncoder = function(message) {
 
   let inQuot = false;
   let out = "";
-  for (c of message) {
+  for (let c of message) {
     if (c === "\"") {
       inQuot = !inQuot;
       continue;
@@ -202,7 +202,7 @@ const isUserInVoiceChannel = function(message, textChannel) {
 // Checks if user is in voice channel
 const hasBotPermissions = function(bot, voiceChannel, textChannel, perms) {
   const permissions = voiceChannel.permissionsFor(bot);
-  for (perm of perms) {
+  for (let perm of perms) {
     if (!permissions.has(perm)) {
       Tools.logError(textChannel, "**I need the following permissions to do this:** " + perms.join(" "));
       return false;
@@ -231,8 +231,8 @@ const levenshteinDistance = function(a, b) {
   }
 
   // Fill in the rest of the matrix
-  for (i = 1; i <= b.length; i++) {
-    for (j = 1; j <= a.length; j++) {
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
       if (b.charAt(i - 1) == a.charAt(j - 1)) {
         matrix[i][j] = matrix[i - 1][j - 1];
       } else {

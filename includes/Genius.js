@@ -86,7 +86,7 @@ const searchAfterField = function(query, field, success, error) {
   genius.search(query).then(function(response) {
     let minLevenshteinDistance = 999999;
     let bestMatchedHit = "";
-    for (hit of response.hits) {
+    for (let hit of response.hits) {
       if (hit.type === "song") {
         let levenshteinDistance = Tools.levenshteinDistance(getFieldFromHit(hit.result, field, query), query);
         if (levenshteinDistance < minLevenshteinDistance) {
