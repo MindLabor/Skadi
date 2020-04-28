@@ -1,0 +1,12 @@
+{
+	"dependencies": {
+		"genius-api": {
+			"version": "0.4.1",
+			"dependencies": {
+				"lodash": {
+					"version": "4.17.15"
+				}
+			}
+		}
+	}
+}
