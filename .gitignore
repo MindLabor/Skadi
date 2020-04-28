@@ -106,3 +106,4 @@ dist
 #Access Tokens
 config.json
 coverage.html
+npm-shrinkwrap.json
