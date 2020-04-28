@@ -28,7 +28,7 @@ function createHelpEmbed() {
 			**8. search:** Search a particular song. \n
 			**9. help:** Show all available commands.`)
     .setTimestamp()
-    .setFooter("Made by Sexy Norweger");
+    .setFooter("Made by MindLabor", "https://avatars0.githubusercontent.com/u/42311986?s=460&u=98d019e97af5c0169bfd9a9d298be22b93833dfc&v=4");
 }
 
 // Export ONLY public functions

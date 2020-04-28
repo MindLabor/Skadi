@@ -8,16 +8,12 @@ const Youtube = require('simple-youtube-api');
 const Helper = require("./includes/Helper.js");
 const Tools = require("./includes/Tools.js");
 const GENIUS = require("./includes/Genius.js");
-const {
-  prefix,
-  token,
-  youtube_token
-} = require("./tconfig.json"); // 3= require("./test-config.json");
 
 const client = new Discord.Client();
 const youtube = new Youtube(Tools.youtube_token);
 
 let queue = [];
+let full_queue = new Map();
 let voiceChannel, textChannel, connection;
 let currentSong;
 let playing = false;
@@ -103,9 +99,8 @@ async function start(message) {
   // Add the url/s to the queue
   // Check if a given url could be a YT playlist
   if (commands.str.includes("list=")) {
-    //await addYTPlaylist(commands.str);
-    // TODO: Incomplete Implementation
-    return;
+    await addYTPlaylist(commands.str);
+    if (queue.length === 0) return;
   } else {
     const id = commands.str;
     const videoExists = await ytVideoIdExists(id);
@@ -115,14 +110,16 @@ async function start(message) {
       Tools.logError(textChannel, "I did not find the given video on Youtube!");
       return;
     }
-  }
 
-  // If there were already a song in the queue (This is not the first song)
-  if (queue.length > 1) {
-    let song = await fetchQueueSong(queue[queue.length - 1]);
-    let embed = createEmbed("Added \"" + song.title + "\" to the playlist!", song.url, [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player.url, [Tools.secsToString(song.length), song.author.avatar]);
-    textChannel.send(embed);
-    return;
+    // If there were already a song in the queue (This is not the first song)
+    if (queue.length > 1) {
+      let song = await fetchQueueSong(queue[queue.length - 1]);
+      full_queue.set(queue[queue.length - 1], song);
+      console.log("Added", queue[queue.length - 1]);
+      let embed = createEmbed("Added \"" + song.title + "\" to the playlist!", song.url, [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player.url, [Tools.secsToString(song.length), song.author.avatar]);
+      textChannel.send(embed);
+      return;
+    }
   }
 
   // Connect to the voice channel and play the queue
@@ -146,6 +143,7 @@ async function play(firstSong) {
 
   // Play song
   createAudioDispatcher();
+  update_full_queue();
 
   // Create and send Discord embed of the current song
   const song = await fetchQueueHeadSong();
@@ -202,29 +200,37 @@ async function ytVideoIdExists(id) {
 }
 
 // TODO: Playlists
-/*
+
 async function addYTPlaylist(url) {
   try {
     const playlist = await youtube.getPlaylist(url);
     const videosObj = await playlist.getVideos();
-    playlists.put(playlist.raw.id, playlist);
-    playlistVideos.put(playlist.raw.id, videosObj);
-    const song = {
-      playlist: playlist.raw.id,
-      remaining: videosObj.length,
-      song: ""
-    };
-    list.push(song);
+
+    for (video of videosObj) {
+      queue.push("https://www.youtube.com/watch?v=" + video.id);
+    }
+
+    update_full_queue();
+
   } catch (err) {
     Tools.logError(textChannel, err);
   }
 
 }
+async function update_full_queue() {
+  for (id of queue) {
+    if (!full_queue.has(id)) {
+      const song = await fetchQueueSong(id);
+      full_queue.set(id, song);
+      console.log("Updated", id);
+    }
+  }
+}
 
 function showPlaylistEmbed() {
   let embed = createEmbed(song.title || "", song.url || "", [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player === undefined ? "" : (song.player.url || ""), [Tools.secsToString(song.length), song.author.avatar]);
   textChannel.send(embed);
-}*/
+}
 
 // Skips the current playing song
 function skip(message) {
@@ -259,7 +265,7 @@ function stop(message) {
 }
 
 // Shows the current queue
-function listQueue(message) {
+async function listQueue(message) {
   // Check if user is in the voice channel
   if (!Tools.isUserInVoiceChannel)
     return;
@@ -270,7 +276,10 @@ function listQueue(message) {
     return;
   }
 
-  textChannel.send(createQueueEmbed());
+  let embeds = await createQueueEmbed();
+  for (let embed of embeds) {
+    textChannel.send(embed);
+  }
 }
 
 // Shows the help embed
@@ -395,22 +404,32 @@ function showLyricsEmbed(lyrics, artist, artistThumb, title) {
 }
 
 
-function createQueueEmbed() {
+async function createQueueEmbed() {
   let embed = new Discord.MessageEmbed()
     .setColor("#6441a5")
     .setTitle("Current Playlist");
 
   let secs = 1;
   let index = 1;
-  for (let song of queue) {
+  let embeds = [];
+  for (let [id, song] of full_queue) {
     const from = Tools.secsToString(secs);
-    const to = Tools.secsToString(secs + parseInt(currentSong.length));
-    embed.addField("**" + index + ".  " + currentSong.title + "**", "From **" + from + "** to **" + to + "**", false);
-    secs += parseInt(currentSong.length);
+    const to = Tools.secsToString(secs + parseInt(song.length));
+    embed.addField("**" + index + ".  " + song.title + "**", "From **" + from + "** to **" + to + "**", false);
+    secs += parseInt(song.length);
     index++;
+    console.log(index);
+    if (index%20==0) {
+      embeds.push(embed);
+      embed = new Discord.MessageEmbed().setColor("#6441a5");
+    }
   }
 
-  return embed;
+  if (index%20!=0) {
+    embeds.push(embed);
+  }
+
+  return embeds;
 }
 
 function createQueueHeadEmbed() {
