@@ -53,7 +53,9 @@ const wordWrap = function(str, maxWidth) {
       str = str.slice(maxWidth);
     }
   }
-  return res + str;
+  let arry = (res + str).split("#~#~#");
+  if (arry.length == 0 || (arry[0] === "" && arry.length == 1)) return [];
+  return arry;
 }
 
 // Test if x is a whitespace character

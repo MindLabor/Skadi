@@ -12,7 +12,7 @@ const {
   prefix,
   token,
   youtube_token
-} = require("./config.json"); // 3= require("./test-config.json");
+} = require("./tconfig.json"); // 3= require("./test-config.json");
 
 const client = new Discord.Client();
 const youtube = new Youtube(Tools.youtube_token);
@@ -375,7 +375,7 @@ function search(message) {
 
 // Shows the lyrics EMBED
 function showLyricsEmbed(lyrics, artist, artistThumb, title) {
-  let messages = Tools.wordWrap(lyrics, 1850).split("#~#~#");
+  let messages = Tools.wordWrap(lyrics, 1850);
   if (messages.length <= 0) return;
 
   let embed = new Discord.MessageEmbed()

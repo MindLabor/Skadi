@@ -36,3 +36,23 @@ describe('Tools.quotationEncoder()', function() {
     })
   })
 })
+
+describe('Tools.wordWrap(str, maxWidth)', function() {
+  context('empty input', function() {
+    it('should return ""', function() {
+      expect(tools.wordWrap("", 120)).to.eql([])
+      expect(tools.wordWrap("", 0)).to.eql([])
+    })
+  })
+  context('with no overflow', function() {
+    it('should return array of input', function() {
+      expect(tools.wordWrap("abc", 6)).to.eql(["abc"])
+    })
+  })
+
+  context('with overflow', function() {
+    it('should be', function() {
+      expect(tools.wordWrap("abcabcabcabcabcabcabcabcabc", 6)).to.eql(["abcabc","abcabc","abcabc","abcabc","abc"])
+    })
+  })
+})
