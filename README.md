@@ -33,4 +33,4 @@
     - **lyrics \<song\>:** Show the lyrics of a given song.
 8. **search:** Search for a particular song. 
     - **search \<video\>:** Searches a video on Youtube.
-9. **help:** Show all available commands.
+9. **help:** Show all available commands. 
