@@ -115,7 +115,6 @@ async function start(message) {
     if (queue.length > 1) {
       let song = await fetchQueueSong(queue[queue.length - 1]);
       full_queue.set(queue[queue.length - 1], song);
-      console.log("Added", queue[queue.length - 1]);
       let embed = createEmbed("Added \"" + song.title + "\" to the playlist!", song.url, [song.author.name, song.author.avatar, song.author.channel_url], song.description.substring(0, 122) + "...", song.player.url, [Tools.secsToString(song.length), song.author.avatar]);
       textChannel.send(embed);
       return;
@@ -206,7 +205,7 @@ async function addYTPlaylist(url) {
     const playlist = await youtube.getPlaylist(url);
     const videosObj = await playlist.getVideos();
 
-    for (video of videosObj) {
+    for (let video of videosObj) {
       queue.push("https://www.youtube.com/watch?v=" + video.id);
     }
 
@@ -218,11 +217,10 @@ async function addYTPlaylist(url) {
 
 }
 async function update_full_queue() {
-  for (id of queue) {
+  for (let id of queue) {
     if (!full_queue.has(id)) {
       const song = await fetchQueueSong(id);
       full_queue.set(id, song);
-      console.log("Updated", id);
     }
   }
 }
@@ -355,7 +353,6 @@ function showLyrics(message) {
 
     artistName = Tools.clean(artistName);
     songTitle = Tools.clean(songTitle);
-    console.log(artistName, songTitle);
 
     // Show Lyrics
     GENIUS.getSongLyrics({
@@ -412,13 +409,14 @@ async function createQueueEmbed() {
   let secs = 1;
   let index = 1;
   let embeds = [];
-  for (let [id, song] of full_queue) {
+  console.log(queue);
+  for (let id of queue) {
+    let song = full_queue.get(id);
     const from = Tools.secsToString(secs);
     const to = Tools.secsToString(secs + parseInt(song.length));
     embed.addField("**" + index + ".  " + song.title + "**", "From **" + from + "** to **" + to + "**", false);
     secs += parseInt(song.length);
     index++;
-    console.log(index);
     if (index%20==0) {
       embeds.push(embed);
       embed = new Discord.MessageEmbed().setColor("#6441a5");
