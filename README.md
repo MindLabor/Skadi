@@ -22,7 +22,8 @@
 
 **Commands:**
 1. **play:** Play a track or put it in the current queue.
-    - **play \<yt id\>:** Play from the youtube video with the given id.
+    - **play \<yt id\>:** Play from the YouTube video with the given id.
+    - **play \<yt playlist url\>:** Add a YouTube playlist to the queue.
 2. **stop:** Stop the track. This will delete the current queue.
 3. **skip:** Skip the current track and play the next. 
 4. **queue:** Show all tracks in the current queue. 
@@ -32,5 +33,5 @@
 7. **lyrics:** Show the lyrics of a given song.
     - **lyrics \<song\>:** Show the lyrics of a given song.
 8. **search:** Search for a particular song. 
-    - **search \<video\>:** Searches a video on Youtube.
+    - **search \<video\>:** Searches a video on YouTube.
 9. **help:** Show all available commands. 
